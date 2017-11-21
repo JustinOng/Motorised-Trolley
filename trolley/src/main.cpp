@@ -63,6 +63,8 @@ void loop() {
 
   static Remote_State remote_state;
 
+  static uint32_t left_move_start = 0, right_move_start = 0;
+
   if (Serial.available()) {
     uint8_t ch = Serial.read();
     //swSerial.print("Rx ");
@@ -106,6 +108,14 @@ void loop() {
       left_speed = map(left_speed, 0, 255, 0, MAX_PWM);
       right_speed = map(right_speed, 0, 255, 0, MAX_PWM);
 
+      if (OCR1A == 0 && left_speed > 0) {
+        left_move_start = millis();
+      }
+
+      if (OCR1B == 0 && right_speed > 0) {
+        right_move_start = millis();
+      }
+
       OCR1A = left_speed;
       OCR1B = right_speed;
 
@@ -121,6 +131,24 @@ void loop() {
     while(0);
 
     last_remote_update = millis();
+  }
+
+  if (left_move_start > 0) {
+    if (OCR1A > 0 && (millis() - left_move_start) < 500) {
+      OCR1A = 255;
+    }
+    else {
+      left_move_start = 0;
+    }
+  }
+
+  if (right_move_start > 0) {
+    if (OCR1B > 0 && (millis() - right_move_start) < 500) {
+      OCR1B = 255;
+    }
+    else {
+      left_move_start = 0;
+    }
   }
 
   if ((millis() - last_remote_update) > 100) {
